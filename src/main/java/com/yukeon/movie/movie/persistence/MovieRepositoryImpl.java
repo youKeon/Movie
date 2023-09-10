@@ -1,9 +1,11 @@
 package com.yukeon.movie.movie.persistence;
 
-import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.yukeon.movie.movie.domain.Genre;
 import com.yukeon.movie.movie.domain.Movie;
+import com.yukeon.movie.movie.dto.response.MovieInfoResponse;
+import com.yukeon.movie.movie.dto.response.QMovieInfoResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 
@@ -17,16 +19,17 @@ public class MovieRepositoryImpl implements MovieCustomRepository {
     private final JPAQueryFactory jpaQueryFactory;
 
     @Override
-    public List<Movie> findMovieList(Genre genre, Boolean isShowing, Pageable pageable) {
-        BooleanBuilder builder = new BooleanBuilder();
-
-        builder.and(movie.isDeleted.isFalse());
-        Optional.ofNullable(genre).ifPresent(value -> builder.and(movie.genre.eq(value)));
-        Optional.ofNullable(isShowing).ifPresent(value -> builder.and(movie.isShowing.eq(value)));
-
+    public List<MovieInfoResponse> findMovieList(Genre genre, Boolean isShowing, Pageable pageable) {
         return jpaQueryFactory
-                .selectFrom(movie)
-                .where(builder)
+                .select(new QMovieInfoResponse(
+                        movie.title,
+                        movie.startDate,
+                        movie.endDate
+                ))
+                .where(
+                        eqGenre(genre),
+                        eqIsShowing(isShowing)
+                )
                 .orderBy(movie.startDate.asc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -42,5 +45,14 @@ public class MovieRepositoryImpl implements MovieCustomRepository {
                         movie.isDeleted.isFalse()
                 )
                 .fetchOne());
+    }
+
+    private BooleanExpression eqGenre(Genre genre) {
+        if (genre == null) return null;
+        return movie.genre.eq(genre);
+    }
+
+    private BooleanExpression eqIsShowing(Boolean isShowing) {
+        return movie.isShowing.eq(isShowing);
     }
 }

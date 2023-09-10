@@ -46,12 +46,7 @@ public class MovieService {
     }
 
     public MovieListResponse findAll(Genre genre, Boolean isShowing, Pageable pageable) {
-        List<Movie> movieList = movieRepository.findMovieList(genre, isShowing, pageable);
-
-        List<MovieInfoResponse> infoList = movieList.stream()
-                .map(MovieInfoResponse::from)
-                .collect(Collectors.toList());
-
+        List<MovieInfoResponse> infoList = movieRepository.findMovieList(genre, isShowing, pageable);
         return MovieListResponse.of(genre, isShowing, infoList);
     }
 
